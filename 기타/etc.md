@@ -1,122 +1,54 @@
-### **실습 1**
+** 컨트롤 노드에는 리눅스 명령어로 직접 설정, 나머지 관리 대상 노드에는 앤서블로 설정해보기 **
 
-**"company" 그룹을 생성하고, "manager1", "manager2" 사용자를 생성하여 이 그룹에 포함시키세요. 두 사용자의 홈 디렉토리는 "/home/managers/" 아래에 생성하세요.**
--> sudo groupadd company
-    **sudo mkdir -p /home/managers **
-    sudo useradd -d /home/managers/manager1 -g company -m manager1
-    sudo useradd -d /home/managers/manager2 -g company -m manager2
+1. 각 시스템에 다음 조건에 맞는 사용자를 설정하세요.
+    1) ansible-user 이라는 이름의 사용자 생성
+    2) 사용자의 UID는 2000
+    3) 사용자의 패스워드는 123
+    4) 패스워드 없이 sudo 명령어를 사용할 수 있게 설정
+    5) 컨트롤 노드의 vagrant 사용자로 키 기반 인증 방식의 접속을 할 수 있도록 설정
+```
+[vagrant@al-controller ~]$ sudo useradd ansible-user -u 2000
+[vagrant@al-controller ~]$ sudo passwd ansible-user
+123
+123
+[vagrant@al-controller ~]$ sudo vi /etc/sudoers.d/ansible-user
+%ansible ALL=(ALL) NOPASSWD: ALL
+```
 
-### **실습 2**
+2. 각 시스템에 다음 조건에 맞게 파일을 생성 및 수정해보세요.
+    1) /tmp/empty-file 이라는 빈 파일을 생성하세요.
+-> [vagrant@al-controller ~]$ touch /tmp/empty-file
+    2) /tmp/newdir  이라는 디렉토리를 생성하세요.
+-> [vagrant@al-controller ~]$ mkdir /tmp/newdir
+    3) /tmp/myfile 이라는 파일을 생성하세요. 이 파일은 내용물로 hello-world 라는 한 줄이 있습니다.
+-> [vagrant@al-controller ~]$ echo "hello-world" | sudo tee /tmp/myfile
+    4) 컨트롤 노드의 /etc/hosts 파일을 각 시스템의 root 사용자의 홈 디렉토리 아래에 hosts 라는 이름의 파일로 복사하세요.
+-> [vagrant@al-controller ~]$ sudo cp /etc/hosts /root/hosts
+    5) /tmp/myfile 이라는 파일의 내용에 add text 라는 글자 한 줄을 추가해보세요.
+-> [vagrant@al-controller ~]$ echo "add text" | sudo tee -a /tmp/myfile
+    6) /tmp/myfile 파일의 내용에서 hello-world 라는 글자를 good-bye 라고 수정해보세요.
+-> 
+    7) /root/hosts 파일의 끝에 각 시스템들의 주소와 이름을 한 줄씩 추가 입력해주세요.
+->
+    8) /root/hosts 파일의 링크 파일을 /tmp 디렉토리에 생성하세요.
+->
+    9) /tmp/myfile 파일의 소유자를 root, 소유 그룹을 wheel, 권한은 600으로 변경하세요.
+->
+    10) /tmp/empty-file 파일을 삭제하세요.
+-> [vagrant@al-controller ~]$ rm -f /tmp/empty-file
 
-**"developer" 사용자를 생성하고, 기본 그룹은 "company", 추가 그룹은 "wheel"로 설정한 후, 계정 만료일을 2026년 3월 15일로 설정하세요.**
-    -> sudo useradd -g company -G wheel -e 20260315 developer
+3. 각 시스템에 패키지를 설치하세요.
+    1) 컨트롤 노드에는 httpd에 mariadb-server 패키지를 둘 다 설치합니다.
+    2) 노드1과 노드2는 하나의 플레이에서 조건문을 활용해서 노드1에는 httpd를, 노드2에는 mariadb-server를 설치하세요.
 
-### **실습 3**
+4. 각 시스템에 서비스를 활성화하세요.
+    1) 컨트롤 노드에는 httpd와 mariadb 서비스를 활성화하세요.
+    2) 노드1과 노드2에는 하나의 작업으로 각각의 서비스를 활성화할 수 있도록 변수를 활용합니다. 변수는 host_vars 디렉토리에 각각 노드1은 httpd, 노드2는 mariadb로 설정해서 만드세요.
 
-**"guest123" 사용자를 생성하되, 로그인 쉘을 "/sbin/nologin"으로 설정하고, 비밀번호를 "temp2025"로 설정하세요.**
-    -> ** sudo useradd -s /sbin/nologin guest123
-    echo "temp2025" | sudo passwd --stdin guest123 **
+5. 방화벽을 설정합니다.
+    1) 컨트롤 노드에는 http와 mariadb가 사용하는 포트번호를 확인해서 둘 다 설정하세요.
+    2) 하나의 작업을 통해서 방화벽 구성을 서로 다르게 설정합니다.
+    4-2와 같은 방식으로 변수를 설정해서, 노드1에는 http 포트를 현재만 활성화
+    노드2에는 mariadb 포트를 현재와 영구 모두 활성화해보세요.
 
-### **실습 4**
-
-**"trainee" 그룹을 생성하고, "student_a", "student_b", "student_c" 사용자를 생성하여 모두 이 그룹에 속하게 하세요. 홈 디렉토리는 자동 생성되지 않도록 설정하세요.**
-  -> sudo groupadd trainee
-  sudo useradd -M -g trainee student_a
-  sudo useradd -M -g trainee student_b
-  sudo useradd -M -g trainee student_c
-
-### **실습 5**
-
-**"intern" 사용자의 기본 그룹을 "trainee"로 변경하고, "company" 그룹을 추가 그룹으로 설정하세요. (intern 사용자가 없으면 먼저 생성)**
-  -> sudo useradd -g trainee -G company intern
-
-### **실습 6**
-
-**"testuser" 계정을 생성하고, 이 사용자의 계정이 30일 후에 자동으로 잠기도록 설정하세요.**
-  -> sudo useradd testuser
-  ** sudo usermod -e $(date -d "+30 days" +%Y-%m-%d) testuser **
-
-### **실습 7**
-
-**"manager1" 사용자가 패스워드 없이 모든 sudo 명령을 실행할 수 있도록 "/etc/sudoers.d/managers" 파일을 생성하여 설정하세요.**
-  -> ** sudo visudo -f /etc/sudoers.d/managers 
-  manager1 ALL=(ALL) NOPASSWD:ALL
-  **
-
-### **실습 8**
-
-**현재 시스템에 생성된 모든 사용자 중 UID가 1000 이상인 사용자들의 정보를 확인하는 명령어를 실행하세요.**
-  -> ** awk -F: '$3 >= 1000 {print $0}' /etc/passwd **
-
-### **실습 9**
-
-**매일 오전 6시 30분에 "/var/log/daily_backup.log" 파일에 현재 날짜와 시간을 추가하는 cron job을 설정하세요.**
-  -> sudo touch /var/log/daily_backup.log
-  crontab -e
-  30 6 * * * date >> /var/log/daily_backup.log
-
-### **실습 10**
-
-**매주 월요일 오전 1시에 홈 디렉토리의 ".cache" 폴더를 삭제하는 cron job을 등록하세요.**
-  -> ** sudo crontab -e
-  ** 0 1 * * 1 rm -rf /home/.cache
-
-### **실습 11**
-
-**2분마다 시스템의 메모리 사용량을 확인하여 "/tmp/memory_check.log"에 기록하는 작업을 설정하세요.**
-
-### **실습 12**
-
-**매월 1일 오후 11시 45분에 "Monthly Report Due" 메시지를 "/var/log/reminders.log"에 추가하는 cron을 설정하세요.**
-
-### **실습 13**
-
-**"/dev/sdb"에 2GB 크기의 파티션을 생성하고, EXT4 파일시스템을 만든 후 "/mnt/data1"에 마운트하세요.**
-
-### **실습 14**
-
-**"/dev/sdb"에 두 번째 파티션을 10GB 크기로 생성하고, XFS 파일시스템을 만든 후 "/mnt/data2"에 마운트하세요.**
-
-### **실습 15**
-
-**위에서 생성한 두 파일시스템이 부팅 시 자동으로 마운트되도록 "/etc/fstab"에 등록하세요.**
-
-### **실습 16**
-
-**"/dev/sdb"의 세 번째 파티션(1GB)을 생성하고 스왑으로 설정한 후 활성화하세요.**
-
-### **실습 17**
-
-**"/mnt/data1"에 "test_file.txt" 파일을 생성하고, "EXT4"라는 내용을 추가하세요.**
-
-### **실습 18**
-
-**"/mnt/data2"의 소유 그룹을 "company"로 변경하고, 그룹 멤버들이 읽기/쓰기 할 수 있도록 권한을 설정하세요.**
-
-### **실습 19**
-
-**"/dev/sdc" 전체를 LVM 파티션으로 설정하고, 물리 볼륨을 생성하세요.**
-
-### **실습 20**
-
-**"vg_production"이라는 볼륨 그룹을 생성하고 위에서 만든 물리 볼륨을 포함시키세요.**
-
-### **실습 21**
-
-**"vg_production"에서 다음 논리 볼륨들을 생성하세요:**
-
-- **"lv_app" (2GB)**
-- **"lv_log" (1GB)**
-- **"lv_backup" (5GB)**
-
-### **실습 22**
-
-**각 논리 볼륨에 XFS 파일시스템을 생성하고, "/app", "/logs", "/backups" 디렉토리에 각각 마운트하세요.**
-
-### **실습 23**
-
-**"lv_app" 볼륨의 크기를 5GB로 확장하고, 파일시스템도 함께 확장하세요.**
-
-### **실습 24**
-
-**LVM 구성이 부팅 시에도 자동으로 마운트되도록 "/etc/fstab"에 등록하세요.**
+6. 안전한 ssh 서버 구성을 위해 설정 파일을 수정해서 모든 시스템이 ssh 접속 시 root 사용자는 접속이 안 되고 일반 사용자는 키 기반 인증만 가능하도록 설정하고 적용시키세요.
